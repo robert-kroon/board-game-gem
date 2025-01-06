@@ -4,25 +4,12 @@ module BoardGameGem
 		attr_reader :id, :type, :thumbnail, :image, :name, :description, :year_published, :min_players, :max_players,
 			:playing_time, :min_playing_time, :max_playing_time, :statistics
 
-		def initialize(xml, api = 2)
-			@api = api
+		def initialize(xml)
+
 			if !xml.nil?
 				@id = get_integer(xml, key_for_api("boardgame", "item"), key_for_api("objectid", "id"))
-				if api == 2
-					@type = get_string(xml, "item", "type")
-				else
-					if !get_value(xml, "boardgame", "subtypemismatch").nil?
-						if !get_value(xml, "videogameplatform").nil?
-							@type = "videogame"
-						elsif !get_value(xml, "boardgameexpansion").nil?
-							@type = "boardgameexpansion"
-						elsif !get_value(xml, "rpgpublisher").nil?
-							@type = "rpgitem"
-						end
-					else
-						@type = "boardgame"
-					end
-				end
+  			@type = get_string(xml, "item", "type")
+
 				@image = get_string(xml, "image")
 				@thumbnail = get_string(xml, "thumbnail")
 				@name = get_string(xml, key_for_api("name", "name[type='primary']"), api_key_value)

@@ -1,5 +1,5 @@
 module BoardGameGem
-	class BGGFamily < BGGBase
+	class BggFamily < BggBase
 
 		attr_reader :id, :thumbnail, :image, :name, :alternate_names, :description
 

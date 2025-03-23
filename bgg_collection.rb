@@ -1,5 +1,5 @@
 module BoardGameGem
-	class BGGCollection < BGGBase
+	class BggCollection < BggBase
 
 		attr_accessor :count, :items
 
@@ -8,7 +8,7 @@ module BoardGameGem
 				@count = get_integer(xml, "items", "totalitems")
 				@items = []
 				xml.css("item").each do |item|
-					@items.push(BGGCollectionItem.new(item))
+					@items.push(BggCollectionItem.new(item))
 				end
 			else
 				@count = -1

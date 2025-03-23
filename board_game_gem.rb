@@ -1,13 +1,15 @@
 require 'nokogiri'
 require 'open-uri'
+
 module BoardGameGem
-  class BoardGameGem
+  class BoardGameGem < BggBase
+    MAX_ATTEMPTS = 10
+
     def self.get_item(id, statistics = false, options = {})
       options[:id] = id
       options[:stats] = statistics ? 1 : 0
-      request_xml = BoardGameGem.request_xml("thing", options)
-      item = BGGItem.new(request_xml)
-      item.id == 0 ? nil : item
+      item = BggItem.new(self.request_xml("thing", options))
+      item
     end
 
     def self.get_items(ids, statistics = false, options = {})
@@ -20,7 +22,7 @@ module BoardGameGem
       item_xml = BoardGameGem.request_xml(path, options)
       item_xml.css(element).wrap("<item_data></item_data>")
       item_xml.css("item_data").each do |item_data|
-        item_list.push(BGGItem.new(item_data))
+        item_list.push(BggItem.new(item_data))
       end
 
       item_list
@@ -28,13 +30,13 @@ module BoardGameGem
 
     def self.get_family(id, options = {})
       options[:id] = id
-      family = BGGFamily.new(BoardGameGem.request_xml("family", options))
+      family = BggFamily.new(BoardGameGem.request_xml("family", options))
       family.id == 0 ? nil : family
     end
 
     def self.get_user(username, options = {})
       options[:name] = username
-      user = BGGUser.new(BoardGameGem.request_xml("user", options))
+      user = BggUser.new(BoardGameGem.request_xml("user", options))
       user.id == 0 ? nil : user
     end
 
@@ -44,7 +46,7 @@ module BoardGameGem
       if collection_xml.css("error").length > 0
         nil
       else
-        BGGCollection.new(collection_xml)
+        BggCollection.new(collection_xml)
       end
     end
 
@@ -53,7 +55,7 @@ module BoardGameGem
       xml = BoardGameGem.request_xml("search", options)
       {
         :total => xml.at_css("items")["total"].to_i,
-        :items => xml.css("item").map { |x| BGGSearchResult.new(x) }
+        :items => xml.css("item").map { |x| BggSearchResult.new(x) }
       }
     end
 
@@ -61,18 +63,9 @@ module BoardGameGem
 
     def self.request_xml(method, hash)
       params = BoardGameGem.hash_to_uri(hash)
-      api_path = "https://www.boardgamegeek.com/xmlapi2/#{method}?#{params}"
-      value = BoardGameGem.retryable(tries: 10, on: OpenURI::HTTPError) do
-        URI.open(api_path) do |file|
-          if file.status[0] != "200"
-            sleep 0.05
-            throw OpenURI::HTTPError
-          else
-            value = Nokogiri::XML(file.read)
-          end
-        end
-      end
-      value
+      url = "https://boardgamegeek.com/xmlapi2/#{method}?#{params}"
+      response = RestClient::Request.execute(method: :get, url: url, verify_ssl: false, max_redirects: 0).body
+      Nokogiri::XML(response)
     end
 
     def self.hash_to_uri(hash)
@@ -81,6 +74,7 @@ module BoardGameGem
 
     def self.retryable(options = {}, &block)
       opts = { :tries => 1, :on => Exception }.merge(options)
+
       retry_exception, retries = opts[:on], opts[:tries]
 
       begin

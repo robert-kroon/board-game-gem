@@ -1,5 +1,5 @@
 module BoardGameGem
-	class BGGSearchResult < BGGBase
+	class BggSearchResult < BggBase
 
 		attr_reader :id, :type, :name, :year_published
 		
@@ -11,7 +11,7 @@ module BoardGameGem
 		end
 
 		def to_item(statistics = false)
-			return BoardGameGem.get_item(@id, statistics)
+			return BoardGameGem::BoardGameGem.get_item(@id, statistics)
 		end
 	end
 end

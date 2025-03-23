@@ -1,5 +1,5 @@
 module BoardGameGem
-	class BGGUser < BGGBase
+	class BggUser < BggBase
 
 		attr_reader :id, :name, :avatar, :year_registered, :last_login, :state, :trade_rating
 

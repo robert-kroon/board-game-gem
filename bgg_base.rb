@@ -1,5 +1,5 @@
 module BoardGameGem
-	class BGGBase
+	class BggBase
 		protected
 
 		def get_value(xml, path, key = nil)

@@ -1,5 +1,5 @@
 module BoardGameGem
-	class BGGCollectionItem < BGGBase
+	class BggCollectionItem < BggBase
 
 		attr_reader :id, :type, :name, :year_published, :image, :thumbnail, :num_players, :status, :num_plays
 
@@ -27,7 +27,7 @@ module BoardGameGem
 		end
 
 		def to_item(statistics = false)
-			return BoardGameGem.get_item(@id, statistics)
+			return BoardGameGem::BoardGameGem.get_item(@id, statistics)
 		end
 	end
 end

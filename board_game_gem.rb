@@ -64,7 +64,9 @@ module BoardGameGem
     def self.request_xml(method, hash)
       params = BoardGameGem.hash_to_uri(hash)
       url = "https://boardgamegeek.com/xmlapi2/#{method}?#{params}"
-      response = RestClient::Request.execute(method: :get, url: url, verify_ssl: false, max_redirects: 0).body
+
+      token = '5c65b3d4-058e-4a1a-92e8-109d3e7658ac'
+      response = RestClient::Request.execute(method: :get, url: url, verify_ssl: false, max_redirects: 0, headers: { Authorization: "Bearer #{token}" }).body
       Nokogiri::XML(response)
     end
 

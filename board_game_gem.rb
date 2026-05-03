@@ -70,7 +70,7 @@ module BoardGameGem
         "#{BGG_API_BASE}/#{method}?#{query_string}"
       end
 
-      def make_request(url)
+      def make_request(url, retries = 3)
         response = Excon.get(
           url,
           headers: default_headers,
@@ -82,7 +82,15 @@ module BoardGameGem
         # BGG API returns 202 when data is being prepared, retry after delay
         if response.status == 202
           sleep 2
-          return make_request(url)
+          return make_request(url, retries)
+        end
+
+        # Handle rate limiting with exponential backoff
+        if response.status == 429 && retries > 0
+          sleep_time = (4 - retries) * 2 # 2, 4, 6 seconds
+          Rails.logger.warn "[BoardGameGem] Rate limited, retrying in #{sleep_time}s (#{retries} retries left)"
+          sleep sleep_time
+          return make_request(url, retries - 1)
         end
 
         raise BggApiError, "BGG API returned status #{response.status}" unless response.status == 200

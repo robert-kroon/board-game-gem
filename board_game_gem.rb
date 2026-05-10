@@ -11,6 +11,27 @@ module BoardGameGem
 
     class BggApiError < StandardError; end
 
+    # BGG API rate limit: max 2 requests/second.
+    # We enforce a minimum interval of 0.5s between requests globally
+    # using a class-level mutex and timestamp.
+    MAX_REQUESTS_PER_SECOND = 2
+    MIN_REQUEST_INTERVAL = 1.0 / MAX_REQUESTS_PER_SECOND
+
+    @last_request_at = nil
+    @rate_limit_mutex = Mutex.new
+
+    # Public throttle method for callers that make direct BGG API requests
+    # outside of BoardGameGem (e.g. BggInformation).
+    def self.throttle!
+      @rate_limit_mutex.synchronize do
+        if @last_request_at
+          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @last_request_at
+          sleep(MIN_REQUEST_INTERVAL - elapsed) if elapsed < MIN_REQUEST_INTERVAL
+        end
+        @last_request_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      end
+    end
+
     def self.get_item(id, statistics = false, options = {})
       options[:id] = id
       options[:stats] = statistics ? 1 : 0
@@ -71,6 +92,8 @@ module BoardGameGem
       end
 
       def make_request(url, retries = 3)
+        throttle_request
+
         response = Excon.get(
           url,
           headers: default_headers,
@@ -104,6 +127,11 @@ module BoardGameGem
           'Accept' => 'application/xml',
           'Authorization' => "Bearer #{BGG_API_TOKEN}"
         }
+      end
+
+      # Ensures we never exceed 2 requests/second to the BGG API.
+      def throttle_request
+        BoardGameGem.throttle!
       end
     end
   end
